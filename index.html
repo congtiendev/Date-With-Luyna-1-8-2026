@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Date with Luy Na</title>
+
+    <link rel="preload" as="image" href="env-back.png">
+    <link rel="preload" as="image" href="env-flap.png">
+    <link rel="preload" as="image" href="flower.png">
+    <link rel="preload" as="image" href="letter.png">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        display: ['"Playfair Display"', 'Georgia', 'serif'],
+                        body: ['"Cormorant Garamond"', 'Georgia', 'serif'],
+                    },
+                    animation: {
+                        'fade-up': 'fadeUp 1s ease-out both',
+                        'drop-in': 'dropIn 2.1s forwards',
+                        'sway': 'sway 6s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        fadeUp: {
+                            '0%': { opacity: '0', transform: 'translateY(24px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        // Rơi tăng tốc như trọng lực, chạm đất rồi nảy nhỏ dần và lắc nhẹ
+                        dropIn: {
+                            '0%': {
+                                opacity: '0',
+                                transform: 'translate3d(0,-130vh,0) rotate(-16deg) scale(.82)',
+                                animationTimingFunction: 'cubic-bezier(.5,0,.75,0)',
+                            },
+                            '6%': { opacity: '1' },
+                            '46%': {
+                                transform: 'translate3d(0,0,0) rotate(5deg) scale(1)',
+                                animationTimingFunction: 'cubic-bezier(.2,.8,.3,1)',
+                            },
+                            '60%': {
+                                transform: 'translate3d(0,-11vh,0) rotate(-4deg) scale(.985)',
+                                animationTimingFunction: 'cubic-bezier(.5,0,.75,0)',
+                            },
+                            '74%': {
+                                transform: 'translate3d(0,0,0) rotate(2.5deg) scale(1)',
+                                animationTimingFunction: 'cubic-bezier(.2,.8,.3,1)',
+                            },
+                            '84%': {
+                                transform: 'translate3d(0,-4vh,0) rotate(-1.4deg)',
+                                animationTimingFunction: 'cubic-bezier(.5,0,.75,0)',
+                            },
+                            '92%': {
+                                transform: 'translate3d(0,0,0) rotate(.8deg)',
+                                animationTimingFunction: 'cubic-bezier(.2,.8,.3,1)',
+                            },
+                            '96%': { transform: 'translate3d(0,-1.2vh,0) rotate(-.3deg)' },
+                            '100%': { opacity: '1', transform: 'translate3d(0,0,0) rotate(0deg) scale(1)' },
+                        },
+                        // Đung đưa rất nhẹ sau khi đã nằm yên
+                        sway: {
+                            '0%, 100%': { transform: 'translateY(0) rotate(0deg)' },
+                            '50%': { transform: 'translateY(-8px) rotate(.7deg)' },
+                        },
+                    },
+                },
+            },
+        }
+    </script>
+</head>
+<body
+    class="relative min-h-screen overflow-hidden bg-black font-body text-white antialiased"
+    style="--env-w: min(70vw, 480px, 52vh)"
+>
+
+    <!-- Video nền -->
+    <video
+        id="bg-video"
+        class="fixed inset-0 -z-20 h-full w-full object-cover"
+        src="bg.mp4"
+        muted
+        playsinline
+        preload="auto"
+        disablepictureinpicture
+    ></video>
+
+    <!-- Phong thư rơi xuống khi video kết thúc.
+         Toạ độ từng lớp được tính từ vùng nội dung thật của mỗi file PNG:
+           env-back  x 304-1230, y 218-878  (926x660)  -> đây là hệ quy chiếu, khung #env-move
+           env-flap  x 204-1328, y 170-808  (1124x638)
+           flower    x 172-1414, y  70-950  (1242x880)
+           letter    x 178- 878, y 272-1226 (700x954, canvas 1024x1536)
+    -->
+    <div class="pointer-events-none fixed inset-0 z-10 flex items-center justify-center">
+        <div id="env-drop" class="opacity-0 will-change-transform">
+            <div
+                id="env-move"
+                class="relative aspect-[926/660] transition-transform duration-[1500ms] ease-[cubic-bezier(.4,0,.2,1)] [perspective:1200px]"
+                style="width: var(--env-w)"
+            >
+                <!-- Thân phong bì (khớp đúng khung) -->
+                <img
+                    src="env-back.png" alt="" draggable="false"
+                    class="absolute left-0 top-0 w-[165.87%] max-w-none transition-opacity duration-700"
+                    style="transform: translate(-19.792%, -21.289%)"
+                >
+
+                <!-- Nắp thư: bản lề nằm ở cạnh trên thân phong bì.
+                     Ảnh vẽ đỉnh hướng lên = tư thế đã mở, nên đóng = rotateX(180deg). -->
+                <img
+                    id="flap"
+                    src="env-flap.png" alt="" draggable="false"
+                    class="absolute left-0 top-0 w-[136.65%] max-w-none transition-all duration-[1100ms] ease-[cubic-bezier(.33,1.1,.4,1)]"
+                    style="transform: translate(-13.281%, -78.906%) rotateX(180deg); transform-origin: 50% 78.906%"
+                >
+
+                <!-- Hoa: lớp trang trí nằm trên nắp -->
+                <img
+                    src="flower.png" alt="" draggable="false"
+                    class="absolute left-0 top-0 w-[155.45%] max-w-none transition-opacity duration-700"
+                    style="transform: translate(-18.42%, -24.13%)"
+                >
+
+                <!-- Vùng cắt: đáy trùng miệng phong bì, thư trồi lên từ đây -->
+                <div id="letter-clip" class="absolute bottom-full left-0 h-[400%] w-full overflow-hidden">
+                    <div
+                        id="letter"
+                        class="absolute bottom-0 left-1/2 aspect-[700/954] w-[62%] transition-transform duration-[1500ms] ease-[cubic-bezier(.4,0,.2,1)]"
+                        style="transform: translate(-50%, 100%); font-size: calc(var(--env-w) * .036)"
+                    >
+                        <img
+                            src="letter.png" alt="" draggable="false"
+                            class="absolute left-0 top-0 w-[146.286%] max-w-none"
+                            style="transform: translate(-17.383%, -17.708%)"
+                        >
+                        <!-- Chữ đè bằng HTML nên luôn sắc nét và đủ dấu tiếng Việt -->
+                        <div class="absolute inset-0 flex flex-col items-center justify-center px-[14%] text-center text-[#6b5747]">
+                            <span class="font-display text-[.62em] uppercase tracking-[.45em] text-[#b09577]">Thư mời</span>
+                            <span class="mt-[1.1em] block h-px w-[3.2em] bg-[#d9c7ae]"></span>
+                            <h2 class="mt-[1em] font-display text-[1.5em] italic leading-tight">Gửi Luy Na,</h2>
+                            <p class="mt-[.9em] text-[1em] leading-relaxed">
+                                Mình muốn mời bạn một buổi hẹn thật đặc biệt. Mong bạn sẽ nhận lời.
+                            </p>
+                            <p class="mt-[1.4em] font-display text-[.7em] uppercase tracking-[.35em]">01 · 08 · 2026</p>
+                            <p class="mt-[.35em] text-[.85em] italic text-[#9c8770]">18:30 · Sài Gòn</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <p
+        id="hint"
+        class="pointer-events-none fixed bottom-10 left-1/2 z-20 -translate-x-1/2 font-display text-[10px] uppercase tracking-[.4em] text-white/75 opacity-0 transition-opacity duration-1000 sm:text-xs"
+    >
+        Chạm để mở thư
+    </p>
+
+    <div
+        id="intro"
+        class="container mx-auto flex min-h-screen max-w-5xl flex-col items-center justify-center px-6 text-center transition-opacity duration-1000"
+    >
+        <h1 class="animate-fade-up font-display text-5xl font-medium italic leading-tight tracking-wide drop-shadow-lg sm:text-7xl md:text-8xl">
+            Date with Luyna
+        </h1>
+
+        <div class="animate-fade-up mt-8 flex items-center gap-4" style="animation-delay: .15s">
+            <span class="h-px w-12 bg-white/50 sm:w-20"></span>
+            <span class="font-display text-sm uppercase tracking-[0.45em] text-white/90 sm:text-base">01 · 08 · 2026</span>
+            <span class="h-px w-12 bg-white/50 sm:w-20"></span>
+        </div>
+
+
+        <button
+            id="play-btn"
+            type="button"
+            class="animate-fade-up mt-12 rounded-none border border-white/50 px-10 py-4 font-display text-xs uppercase tracking-[0.35em] backdrop-blur-sm transition duration-300 hover:bg-white hover:text-black sm:text-sm"
+            style="animation-delay: .45s"
+        >
+            Khám phá
+        </button>
+    </div>
+
+    <script>
+        // Video chỉ phát MỘT lần, sau khi bấm "Khám phá".
+        // Đã phát rồi thì không cho phát lại, trừ khi tải lại trang.
+        const video = document.getElementById('bg-video');
+        const playBtn = document.getElementById('play-btn');
+        const intro = document.getElementById('intro');
+        let started = false;
+
+        playBtn.addEventListener('click', () => {
+            if (started) return;
+            started = true;
+            playBtn.disabled = true;
+
+            // Ẩn toàn bộ chữ để chỉ còn video
+            intro.classList.add('opacity-0', 'pointer-events-none');
+
+            video.play().catch(() => {});
+        });
+
+        // Hết video thì dừng hẳn ở khung hình cuối và thả phong thư xuống
+        const envDrop = document.getElementById('env-drop');
+        const envMove = document.getElementById('env-move');
+        const flap = document.getElementById('flap');
+        const letterClip = document.getElementById('letter-clip');
+        const letter = document.getElementById('letter');
+        const hint = document.getElementById('hint');
+        const paperLayers = envMove.querySelectorAll('img[src="env-back.png"], img[src="env-flap.png"], img[src="flower.png"]');
+
+        // Khoảng tụt xuống của phong bì để lá thư trồi lên xong nằm đúng giữa màn hình:
+        //   D = (chiều cao thân + chiều cao lá thư) / 2
+        //     = (0.71274 + 0.845) / 2 * env-w = 0.779 * env-w
+        const DROP = 'calc(var(--env-w) * .779)';
+
+        let landed = false;
+        let opened = false;
+
+        video.addEventListener('ended', () => {
+            video.pause();
+            // Giữ nguyên opacity-0: keyframe dropIn tự điều khiển opacity nên không bị loé một khung hình
+            envDrop.classList.add('animate-drop-in');
+        }, { once: true });
+
+        // Rơi xong thì chuyển sang đung đưa nhẹ và cho phép bấm mở
+        envDrop.addEventListener('animationend', (e) => {
+            if (e.animationName !== 'dropIn') return;
+            envDrop.classList.remove('opacity-0', 'animate-drop-in');
+            envDrop.classList.add('animate-sway');
+            landed = true;
+            envMove.classList.add('pointer-events-auto', 'cursor-pointer');
+            hint.classList.remove('opacity-0');
+        });
+
+        envMove.addEventListener('click', open);
+
+        function open() {
+            if (!landed || opened) return;
+            opened = true;
+            hint.classList.add('opacity-0');
+            envMove.classList.remove('cursor-pointer');
+            envDrop.classList.remove('animate-sway');
+
+            // 1) Nắp bật lên
+            flap.style.transform = 'translate(-13.281%, -78.906%) rotateX(0deg)';
+
+            // 2) Phong bì tụt xuống, lá thư trồi lên khỏi miệng thư
+            setTimeout(() => {
+                envMove.style.transform = `translateY(${DROP})`;
+                letter.style.transform = 'translate(-50%, 0)';
+            }, 700);
+
+            // 3) Giấy phong bì mờ dần, chỉ còn lại lá thư
+            setTimeout(() => {
+                paperLayers.forEach((el) => (el.style.opacity = '0'));
+            }, 1500);
+
+            // 4) Thư đã ra hẳn -> bỏ vùng cắt rồi phóng to cho dễ đọc
+            setTimeout(() => {
+                letterClip.classList.remove('overflow-hidden');
+                letter.style.transform = 'translate(-50%, 0) scale(1.12)';
+            }, 2300);
+        }
+
+        // Chặn mọi lệnh play khác (kể cả trình duyệt tự khôi phục) khi chưa bấm nút hoặc đã xem xong
+        video.addEventListener('play', () => {
+            if (!started || video.ended) video.pause();
+        });
+
+        // Phím tắt lúc chỉnh giao diện: ?skip = bỏ qua video, ?open = mở luôn phong thư
+        const q = new URLSearchParams(location.search);
+        if (q.has('skip') || q.has('open')) {
+            started = true;
+            intro.classList.add('opacity-0', 'pointer-events-none');
+            envDrop.classList.add('animate-drop-in');
+            if (q.has('open')) {
+                envDrop.addEventListener('animationend', () => setTimeout(open, 150), { once: true });
+            }
+        }
+    </script>
+</body>
+</html>
