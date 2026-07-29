@@ -1,0 +1,6 @@
+/* --env-w: bề rộng thân phong bì, mọi lớp đều quy chiếu theo biến này.
+   --letter-zoom: cỡ lá thư ở bước cuối; màn nhỏ cần phóng to hơn cho dễ đọc. */
+:root { --env-w: min(70vw, 480px, 52vh); --letter-zoom: 1.5; }
+@media (max-width: 640px) {
+    :root { --env-w: min(80vw, 420px, 46vh); --letter-zoom: 1.72; }
+}
